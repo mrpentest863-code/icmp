@@ -11,7 +11,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "pingtunnel.h"
-#include "crypto.h"
 
 std::atomic<bool> running{true};
 int icmp_sock;
@@ -20,7 +19,6 @@ std::string username, password;
 int sequence = 0;
 std::map<std::string, int> tcp_conns;
 std::mutex conns_mutex;
-CryptoConfig* cryptoConfig = nullptr;
 
 void send_icmp(const std::string& conn_id, const std::vector<uint8_t>& data, int type) {
     MyMsg msg;
@@ -33,7 +31,6 @@ void send_icmp(const std::string& conn_id, const std::vector<uint8_t>& data, int
     msg.password = password;
 
     std::vector<uint8_t> mb = marshalMyMsg(msg);
-    if (cryptoConfig) mb = cryptoConfig->Encrypt(mb);
 
     size_t total_len = sizeof(struct icmphdr) + mb.size();
     std::vector<uint8_t> packet(total_len);
@@ -68,8 +65,6 @@ void recv_icmp_loop() {
         if (n <= 8) continue;
 
         std::vector<uint8_t> payload(buffer.begin() + 8, buffer.begin() + n);
-        if (cryptoConfig) payload = cryptoConfig->Decrypt(payload);
-
         MyMsg msg;
         if (!unmarshalMyMsg(payload, msg)) continue;
         if (msg.magic != MyMsg_MAGIC) continue;
