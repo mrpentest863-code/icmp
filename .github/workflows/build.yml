@@ -1,0 +1,44 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download Gradle 7.5
+        run: |
+          wget https://services.gradle.org/distributions/gradle-7.5-bin.zip
+          unzip gradle-7.5-bin.zip
+          export PATH=$PWD/gradle-7.5/bin:$PATH
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install NDK
+        run: sdkmanager "ndk;21.4.7075529"
+
+      - name: Build C++ binaries
+        run: |
+          export NDK=$ANDROID_HOME/ndk/21.4.7075529
+          mkdir -p app/src/main/assets/arm64-v8a
+          mkdir -p app/src/main/assets/armeabi-v7a
+          $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ -o app/src/main/assets/arm64-v8a/pingtunnel_cpp client.cpp pingtunnel.cpp crypto.cpp
+          $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++ -o app/src/main/assets/armeabi-v7a/pingtunnel_cpp client.cpp pingtunnel.cpp crypto.cpp
+
+      - name: Build APK with Gradle 7.5
+        run: |
+          export PATH=$PWD/gradle-7.5/bin:$PATH
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
