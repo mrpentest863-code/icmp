@@ -19,22 +19,28 @@ class MyVpnService : VpnService() {
 
         val binary = copyBinary()
 
-        try {
-            tunnelProcess = ProcessBuilder(binary.absolutePath, server, user, pass)
-                .redirectErrorStream(true)
-                .start()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            stopSelf()
-            return START_NOT_STICKY
-        }
-
+        // Établir le VPN et obtenir le descripteur de fichier
         val builder = Builder()
         builder.setSession("PingTunnel VPN")
         builder.addAddress("10.0.0.2", 24)
         builder.addRoute("0.0.0.0", 0)
         builder.addDnsServer("8.8.8.8")
         vpnInterface = builder.establish()
+
+        try {
+            // Lancer le client C++ avec le fd du VPN et les identifiants
+            tunnelProcess = ProcessBuilder(
+                binary.absolutePath,
+                server,
+                user,
+                pass,
+                vpnInterface!!.fd.toString()
+            ).redirectErrorStream(true).start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         Toast.makeText(this, "VPN connecté", Toast.LENGTH_SHORT).show()
         return START_STICKY
