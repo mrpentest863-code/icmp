@@ -19,7 +19,6 @@ class MyVpnService : VpnService() {
 
         val binary = copyBinary()
 
-        // Établir le VPN et obtenir le descripteur de fichier
         val builder = Builder()
         builder.setSession("PingTunnel VPN")
         builder.addAddress("10.0.0.2", 24)
@@ -28,7 +27,6 @@ class MyVpnService : VpnService() {
         vpnInterface = builder.establish()
 
         try {
-            // Lancer le client C++ avec le fd du VPN et les identifiants
             tunnelProcess = ProcessBuilder(
                 binary.absolutePath,
                 server,
@@ -62,8 +60,22 @@ class MyVpnService : VpnService() {
     }
 
     override fun onDestroy() {
-        vpnInterface?.close()
+        // Arrêter le processus du tunnel
         tunnelProcess?.destroy()
+        tunnelProcess = null
+
+        // Fermer l'interface VPN
+        try {
+            vpnInterface?.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        vpnInterface = null
+
+        // Arrêter le service proprement
+        stopForeground(true)
+        stopSelf()
+
         Toast.makeText(this, "VPN déconnecté", Toast.LENGTH_SHORT).show()
         super.onDestroy()
     }
