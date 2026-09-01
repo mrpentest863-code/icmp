@@ -26,9 +26,6 @@ jobs:
           $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ -o app/src/main/assets/arm64-v8a/pingtunnel_cpp client.cpp pingtunnel.cpp crypto.cpp
           $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++ -o app/src/main/assets/armeabi-v7a/pingtunnel_cpp client.cpp pingtunnel.cpp crypto.cpp
 
-      - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version 7.5
-
       - name: Build APK
         run: |
           chmod +x gradlew
