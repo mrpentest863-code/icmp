@@ -36,8 +36,6 @@ class MyVpnService : VpnService() {
         builder.addDnsServer("8.8.8.8")
         vpnInterface = builder.establish()
 
-        tun2socks.Tun2socks.startVpn(vpnInterface!!.fd, "127.0.0.1:1080")
-
         Toast.makeText(this, "VPN connecté", Toast.LENGTH_SHORT).show()
         return START_STICKY
     }
@@ -60,7 +58,6 @@ class MyVpnService : VpnService() {
     override fun onDestroy() {
         vpnInterface?.close()
         tunnelProcess?.destroy()
-        tun2socks.Tun2socks.stopVpn()
         Toast.makeText(this, "VPN déconnecté", Toast.LENGTH_SHORT).show()
         super.onDestroy()
     }
